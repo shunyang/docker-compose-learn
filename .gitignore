@@ -1,0 +1,13 @@
+.classpath
+.project
+.idea/
+*.iml
+logs/
+store/
+target/
+release/
+.DS_Store
+doc
+.settings/
+.vertx/*
+files/*

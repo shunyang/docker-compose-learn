@@ -1,0 +1,37 @@
+version: "3"
+services:
+  mqnamesrv:
+    image: foxiswho/rocketmq:4.8.0 # 镜像
+    container_name: mqnamesrv  # 容器名
+    ports: # 映射端口
+      - 9876:9876
+    volumes:  # 数据卷挂载路径设置,将本机目录映射到容器目录
+      - ./../logs/rocketmq:/home/rocketmq/logs
+    environment: # 设置环境变量,相当于docker run命令中的-e
+      JAVA_OPT: -server -Xms256m -Xmx256m
+    command: sh mqnamesrv
+  mqbroker:
+    image: foxiswho/rocketmq:4.8.0
+    container_name: mqbroker
+    ports: 
+      - 10911:10911
+      - 10909:10909
+    volumes:
+      - ./broker.conf:/home/rocketmq/conf/broker.conf
+      - ./../logs/rocketmq:/home/rocketmq/logs
+      - ./../store:/home/rocketmq/store
+    environment:
+      JAVA_OPT_EXT: -server -Xms1024m -Xmx1024m -Xmn512m -XX:ParallelGCThreads=8
+      NAMESRV_ADDR: mqnamesrv:9876
+    command: sh mqbroker -n mqnamesrv:9876 autoCreateTopicEnable=true -c /home/rocketmq/conf/broker.conf 
+  mqconsole:
+    image: styletang/rocketmq-console-ng
+    container_name: mqconsole
+    ports:
+      - 19876:8080
+    volumes:
+      - ./config:/config
+    depends_on:
+      - mqnamesrv
+    environment:
+      JAVA_OPTS: -Drocketmq.namesrv.addr=mqnamesrv:9876 -Drocketmq.config.aclEnabled=true  -Dcom.rocketmq.sendMessageWithVIPChannel=false
